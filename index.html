@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png" sizes="192x192">
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="manifest" id="manifestLink" href="manifest.webmanifest">
 <title>농지 임대 상황 보기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=IBM+Plex+Sans+KR:wght@400;600&display=swap">
@@ -218,6 +218,11 @@ nav.tabs a[aria-current="page"] { background: var(--accent); color: var(--accent
 
   <main>
     <div class="notice-bar" id="status">장부를 불러오는 중이에요.</div>
+    <form class="notice-bar" id="linkForm" hidden>
+      <label for="linkInput" style="display:block;font-weight:600;margin-bottom:0.4rem">가족이 보내준 장부 링크를 붙여 넣어 주세요</label>
+      <input id="linkInput" inputmode="url" autocomplete="off" placeholder="https://…?s=…" style="width:100%;font:inherit;padding:0.6rem 0.75rem;border:2px solid var(--edge);border-radius:12px;background:var(--surface);color:var(--fg)">
+      <div class="btn-row" style="margin-top:0.6rem"><button class="btn" type="submit">장부 열기</button></div>
+    </form>
 
     <section id="view-home" aria-labelledby="h-home">
       <div class="section-head">
@@ -277,13 +282,24 @@ nav.tabs a[aria-current="page"] { background: var(--accent); color: var(--accent
     try { id = (new URLSearchParams(location.search).get("s") || "").trim(); } catch (_) {}
     if (/^[A-Za-z0-9_-]{20,}$/.test(id)) {
       try { localStorage.setItem("farm-sheet", id); } catch (_) {}
-      try { history.replaceState(null, "", location.pathname + location.hash); } catch (_) {}
       return id;
     }
     try { id = localStorage.getItem("farm-sheet") || ""; } catch (_) { id = ""; }
     return CFG.sheetId || id;
   }
   const SHEET_ID = resolveSheetId();
+  if (SHEET_ID) {
+    try {
+      // 주소창에도 ?s= 가 있게 맞춰 둠 (아이폰 '홈 화면에 추가'는 지금 주소를 저장함)
+      if (!new URLSearchParams(location.search).get("s")) history.replaceState(null, "", location.pathname + "?s=" + encodeURIComponent(SHEET_ID) + location.hash);
+      const base = location.origin + location.pathname.replace(/[^/]*$/, "");
+      const mf = { name: "농지 임대 상황 보기", short_name: "농지 임대", lang: "ko", display: "standalone",
+        start_url: base + "?s=" + encodeURIComponent(SHEET_ID), scope: base,
+        background_color: "#F3F5F0", theme_color: "#245A33",
+        icons: [{ src: base + "icon-192.png", sizes: "192x192", type: "image/png" }, { src: base + "icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" }] };
+      document.getElementById("manifestLink").href = "data:application/manifest+json;charset=utf-8," + encodeURIComponent(JSON.stringify(mf));
+    } catch (_) {}
+  }
   const SHEET_EDIT = "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/edit";
   const KIND = {
     wituk:   { label: "농지은행 위탁", cls: "k-a" },
@@ -582,7 +598,18 @@ nav.tabs a[aria-current="page"] { background: var(--accent); color: var(--accent
   const t = today0();
   $("today").textContent = "오늘 " + t.getFullYear() + "년 " + (t.getMonth() + 1) + "월 " + t.getDate() + "일";
   route(); renderAll();
-  if (!SHEET_ID) setStatus("가족이 보내준 장부 링크로 한 번 열어 주세요. 그 뒤로는 이 휴대폰이 기억해요.", true); else load();
+  if (!SHEET_ID) {
+    setStatus("");
+    $("linkForm").hidden = false;
+    $("linkForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const v = $("linkInput").value.trim();
+      const m = v.match(/[?&]s=([A-Za-z0-9_-]{20,})/) || v.match(/\/d\/([A-Za-z0-9_-]{20,})/) || v.match(/^([A-Za-z0-9_-]{20,})$/);
+      if (!m) { setStatus("링크 모양이 맞지 않아요. 가족이 보내준 링크를 그대로 붙여 넣어 주세요.", true); return; }
+      try { localStorage.setItem("farm-sheet", m[1]); } catch (_) {}
+      location.href = location.pathname + "?s=" + encodeURIComponent(m[1]);
+    });
+  } else load();
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && state.loaded) load(true); });
   setInterval(() => { if (document.visibilityState === "visible" && state.loaded) load(true); }, 5 * 60000);
 })();
