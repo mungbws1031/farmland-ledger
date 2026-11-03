@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>우리 땅 임대 장부</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: 휴대폰 한 손 장부 — 위 머리띠, 가운데 카드 목록, 아래 탭 3개. 글씨는 어르신 기준으로 크게. */
+:root {
+  --bg: #F3F5F0;
+  --surface: #FFFFFF;
+  --fg: #1C2620;
+  --muted: #5E6A62;
+  --line: #D9DFD5;
+  --accent: #2E6A3F;
+  --accent-soft: #E3EEE3;
+  --hot: #B3261E;
+  --hot-soft: #FBE9E7;
+  --warm: #A35F00;
+  --warm-soft: #FBF0DE;
+  --calm: #5E6A62;
+  --calm-soft: #EEF1EC;
+  --kind-a: #2E6A3F;
+  --kind-b: #7A4E1D;
+  --kind-c: #3F5E73;
+  --font-display: "Gowun Batang", "Nanum Myeongjo", serif;
+  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --base: 18px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111612; --surface: #1A211C; --fg: #E4EBE4; --muted: #9AA69D; --line: #2D3830;
+    --accent: #84C493; --accent-soft: #203326; --hot: #F2857B; --hot-soft: #3A1E1B;
+    --warm: #F0B05A; --warm-soft: #3A2C15; --calm: #9AA69D; --calm-soft: #222B24;
+    --kind-a: #84C493; --kind-b: #D9A66B; --kind-c: #8FB6D1; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111612; --surface: #1A211C; --fg: #E4EBE4; --muted: #9AA69D; --line: #2D3830;
+  --accent: #84C493; --accent-soft: #203326; --hot: #F2857B; --hot-soft: #3A1E1B;
+  --warm: #F0B05A; --warm-soft: #3A2C15; --calm: #9AA69D; --calm-soft: #222B24;
+  --kind-a: #84C493; --kind-b: #D9A66B; --kind-c: #8FB6D1; color-scheme: dark;
+}
+:root[data-size="lg"] { --base: 21px; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+:root { padding-top: env(safe-area-inset-top, 0px); }
+.login { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 1rem; }
+html { font-size: var(--base); }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 1rem; line-height: 1.6;
+  margin: 0;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  font-variant-numeric: tabular-nums;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 44rem; margin: 0 auto; }
+h1, h2 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.3; }
+h1 { font-size: 1.45rem; }
+h2 { font-size: 1.15rem; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+header.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--bg); padding-block: 0.9rem 0.7rem;
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;
+  border-bottom: 1px solid var(--line);
+}
+.today { color: var(--muted); font-size: 0.85rem; }
+.size-btn {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 999px;
+  padding: 0.35rem 0.9rem; font-size: 0.85rem; cursor: pointer;
+}
+.size-btn[aria-pressed="true"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+
+main { padding-block: 1rem 1rem; display: grid; gap: 1.25rem; }
+.lead { margin: 0; color: var(--muted); font-size: 0.95rem; }
+.notice-bar {
+  background: var(--calm-soft); border-radius: 12px; padding: 0.75rem 1rem; font-size: 0.9rem; color: var(--muted);
+}
+.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; }
+.count { color: var(--muted); font-size: 0.85rem; }
+
+/* 할 일 카드 */
+.todo-list { display: grid; gap: 0.75rem; list-style: none; padding: 0; margin: 0; }
+.todo {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  padding: 0.9rem 1rem; display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 0.9rem; align-items: start;
+  cursor: pointer; text-align: left; width: 100%;
+}
+.todo:hover { border-color: var(--accent); }
+.dday {
+  grid-row: span 3; min-width: 4.6rem; text-align: center; border-radius: 10px; padding: 0.45rem 0.4rem;
+  font-weight: 700; font-size: 1.15rem; line-height: 1.2;
+}
+.dday small { display: block; font-size: 0.7rem; font-weight: 500; }
+.u-over .dday, .u-hot .dday { background: var(--hot-soft); color: var(--hot); }
+.u-warm .dday { background: var(--warm-soft); color: var(--warm); }
+.u-calm .dday { background: var(--calm-soft); color: var(--calm); }
+.todo-title { font-weight: 700; font-size: 1.05rem; min-width: 0; }
+.todo-place { color: var(--fg); min-width: 0; }
+.todo-plain { color: var(--muted); font-size: 0.9rem; min-width: 0; }
+
+/* 목록 */
+.chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.chip {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 0.35rem 0.9rem;
+  cursor: pointer; font-size: 0.9rem;
+}
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.rows { display: grid; gap: 0.6rem; list-style: none; padding: 0; margin: 0; }
+.row {
+  width: 100%; text-align: left; cursor: pointer; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 14px; padding: 0.85rem 1rem; display: grid; gap: 0.2rem;
+}
+.row:hover { border-color: var(--accent); }
+.row-top { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.row-region { font-weight: 700; min-width: 0; }
+.row-parcels { color: var(--muted); font-size: 0.9rem; min-width: 0; overflow-wrap: anywhere; }
+.row-meta { font-size: 0.9rem; display: flex; gap: 0.4rem 1rem; flex-wrap: wrap; }
+.pill { font-size: 0.75rem; font-weight: 600; border-radius: 999px; padding: 0.1rem 0.6rem; border: 1px solid currentColor; white-space: nowrap; }
+.k-a { color: var(--kind-a); } .k-b { color: var(--kind-b); } .k-c { color: var(--kind-c); } .k-d { color: var(--muted); }
+.flag { color: var(--hot); font-weight: 600; }
+
+.btn {
+  border: 1px solid var(--accent); background: var(--accent); color: var(--surface);
+  border-radius: 12px; padding: 0.6rem 1.1rem; font-weight: 600; cursor: pointer;
+}
+.btn.ghost { background: transparent; color: var(--accent); }
+.btn.danger { background: transparent; color: var(--hot); border-color: var(--hot); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.btn-row { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+
+/* 연락처 */
+.contact { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 0.85rem 1rem; display: grid; gap: 0.3rem; }
+.phone-line { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.phone { font-size: 1.2rem; font-weight: 700; user-select: all; }
+.phone a { color: inherit; text-decoration: none; }
+.mini { border: 1px solid var(--line); background: transparent; border-radius: 8px; padding: 0.15rem 0.6rem; font-size: 0.8rem; cursor: pointer; }
+
+/* 상세 시트 */
+.sheet-backdrop { position: fixed; inset: 0; background: rgba(10, 15, 11, 0.45); z-index: 20; }
+.sheet {
+  position: fixed; z-index: 21; left: 0; right: 0; bottom: 0; max-height: 92%; overflow-y: auto;
+  background: var(--bg); border-radius: 18px 18px 0 0;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 1rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
+}
+.sheet-inner { max-width: 44rem; margin: 0 auto; display: grid; gap: 1rem; }
+.sheet-head { display: flex; justify-content: space-between; align-items: start; gap: 0.75rem; }
+.close { border: none; background: var(--calm-soft); border-radius: 999px; width: 2.4rem; height: 2.4rem; font-size: 1.1rem; cursor: pointer; flex: none; }
+dl.info { margin: 0; display: grid; grid-template-columns: 6.5rem 1fr; gap: 0.45rem 0.75rem; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 0.9rem 1rem; }
+dl.info dt { color: var(--muted); font-size: 0.9rem; }
+dl.info dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.issue-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.issue { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 0.7rem 0.9rem; display: grid; gap: 0.2rem; }
+.issue-top { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; font-size: 0.85rem; color: var(--muted); }
+.st-open { color: var(--hot); font-weight: 600; } .st-done { color: var(--accent); font-weight: 600; }
+
+.addr { font-weight: 600; overflow-wrap: anywhere; user-select: all; }
+.maplink { display: inline-block; border: 1px solid var(--accent); color: var(--accent); border-radius: 10px; padding: 0.3rem 0.8rem; font-weight: 600; text-decoration: none; font-size: 0.9rem; }
+.maplink:hover { background: var(--accent-soft); }
+form.grid { display: grid; gap: 0.8rem; }
+.field { display: grid; gap: 0.25rem; }
+.field label { font-size: 0.9rem; color: var(--muted); }
+.field input, .field select, .field textarea {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 0.55rem 0.75rem; width: 100%;
+}
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+.check { display: flex; gap: 0.6rem; align-items: center; }
+.check input { width: 1.3rem; height: 1.3rem; accent-color: var(--accent); }
+.hint { font-size: 0.8rem; color: var(--muted); margin: 0; }
+.confirm { background: var(--hot-soft); border-radius: 12px; padding: 0.8rem 1rem; display: grid; gap: 0.6rem; }
+
+nav.tabs {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 6;
+  background: var(--surface); border-top: 1px solid var(--line);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+nav.tabs .in { max-width: 44rem; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); }
+nav.tabs a {
+  text-align: center; padding: 0.8rem 0.2rem; text-decoration: none; color: var(--muted); font-weight: 600;
+  border-top: 3px solid transparent;
+}
+nav.tabs a[aria-current="page"] { color: var(--accent); border-top-color: var(--accent); }
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  background: var(--fg); color: var(--bg); padding: 0.55rem 1.1rem; border-radius: 999px; z-index: 30; font-size: 0.9rem;
+}
+@media (max-width: 420px) { .two { grid-template-columns: 1fr; } dl.info { grid-template-columns: 1fr; gap: 0.1rem; } dl.info dd { margin-bottom: 0.4rem; } }
+@media (prefers-reduced-motion: no-preference) { .sheet { animation: up 0.18s ease-out; } @keyframes up { from { transform: translateY(24px); opacity: 0.6; } } }
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>우리 땅 임대 장부</h1>
+      <div class="today" id="today"></div>
+    </div>
+    <button class="size-btn" id="sizeBtn" type="button" aria-pressed="false">글씨 크게</button>
+  </header>
+
+  <main>
+    <div class="notice-bar" id="status">장부를 불러오는 중이에요.</div>
+    <form class="grid login" id="loginForm" hidden>
+      <h2>가족 비밀번호</h2>
+      <p class="lead">처음 한 번만 입력하면 이 기기에서 기억해요.</p>
+      <div class="field" id="urlField" hidden><label for="l-url">연결 주소 (Apps Script 웹 앱 URL)</label><input id="l-url" inputmode="url" placeholder="https://script.google.com/macros/s/…/exec"></div>
+      <div class="field"><label for="l-key">비밀번호</label><input id="l-key" type="password" autocomplete="current-password" required></div>
+      <div class="btn-row"><button class="btn" type="submit">장부 열기</button></div>
+    </form>
+
+    <section id="view-home" aria-labelledby="h-home">
+      <div class="section-head">
+        <h2 id="h-home">다가오는 할 일</h2>
+        <span class="count" id="homeCount"></span>
+      </div>
+      <p class="lead">6개월 안에 챙길 날짜와 이미 지난 날짜를 가까운 순서로 보여줘요. 카드를 누르면 그 땅의 자세한 내용이 열려요.</p>
+      <ul class="todo-list" id="todoList"></ul>
+      <div id="checks"></div>
+    </section>
+
+    <section id="view-list" aria-labelledby="h-list" hidden>
+      <div class="section-head">
+        <h2 id="h-list">땅 목록</h2>
+        <button class="btn" id="addBtn" type="button">땅 추가</button>
+      </div>
+      <div class="chips" id="chips" role="group" aria-label="관리 유형으로 거르기"></div>
+      <ul class="rows" id="rows"></ul>
+    </section>
+
+    <section id="view-contacts" aria-labelledby="h-contacts" hidden>
+      <div class="section-head">
+        <h2 id="h-contacts">연락처</h2>
+      </div>
+      <p class="lead">번호를 길게 눌러 복사하거나 '복사'를 누르세요. 휴대폰에서는 번호를 눌러 바로 걸 수도 있어요.</p>
+      <ul class="rows" id="contacts"></ul>
+      <form class="grid" id="contactForm" hidden>
+        <h2>연락처 추가</h2>
+        <div class="two">
+          <div class="field"><label for="c-name">이름·담당</label><input id="c-name" required></div>
+          <div class="field"><label for="c-phone">전화번호</label><input id="c-phone" inputmode="tel" required></div>
+        </div>
+        <div class="field"><label for="c-memo">메모</label><input id="c-memo"></div>
+        <div class="btn-row"><button class="btn" type="submit">연락처 저장</button></div>
+      </form>
+      <div class="btn-row" style="margin-top:1.5rem"><button class="btn ghost" type="button" id="logoutBtn">이 기기에서 비밀번호 지우기</button></div>
+    </section>
+  </main>
+</div>
+
+<nav class="tabs" aria-label="화면">
+  <div class="in">
+    <a href="#home" data-view="home">할 일</a>
+    <a href="#list" data-view="list">땅 목록</a>
+    <a href="#contacts" data-view="contacts">연락처</a>
+  </div>
+</nav>
+
+<div id="sheetRoot"></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+  const KIND = {
+    wituk:   { label: "농지은행 위탁", cls: "k-a" },
+    private: { label: "개인 간 임대", cls: "k-b" },
+    forest:  { label: "임야", cls: "k-c" },
+    self:    { label: "자경", cls: "k-d" },
+    idle:    { label: "휴경·미임대", cls: "k-d" }
+  };
+  const state = { leases: [], contacts: [], loaded: false, db: null, canWrite: null, filter: "all", saving: false };
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  /* ---------- 날짜 ---------- */
+  function parseD(s) { if (!s) return null; const p = String(s).split("-").map(Number); if (!p[0] || !p[1] || !p[2]) return null; return new Date(p[0], p[1] - 1, p[2]); }
+  function today0() { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); }
+  function iso(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  function fmt(d) { return d ? d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate() : "—"; }
+  function diffDays(d) { return Math.round((d - today0()) / 86400000); }
+  function addMonths(d, n) { const r = new Date(d.getFullYear(), d.getMonth() + n, 1); const last = new Date(r.getFullYear(), r.getMonth() + 1, 0).getDate(); r.setDate(Math.min(d.getDate(), last)); return r; }
+  function addDays(d, n) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }
+  function years(a, b) { return (b - a) / (365.25 * 86400000); }
+  function ddayText(n) { return n === 0 ? "D-day" : n > 0 ? "D-" + n : "D+" + (-n); }
+  function urgency(n) { return n < 0 ? "over" : n <= 30 ? "hot" : n <= 90 ? "warm" : "calm"; }
+
+  /* ---------- 법정 기한 계산 ---------- */
+  function deadlines(L) {
+    const out = [];
+    const start = parseD(L.start), end = parseD(L.end);
+    if (L.customDeadline) {
+      const d = parseD(L.customDeadline);
+      if (d) out.push({ type: "custom", date: d, title: L.customDeadlineLabel || "직접 정한 마감", plain: "직접 정한 날짜예요.", overPlain: "정한 날짜가 지났어요. 처리했으면 수정에서 지워 주세요.", basis: "직접 입력" });
+    }
+    if (L.kind === "private") {
+      if (end && !L.noticeDone) out.push({ type: "notice", date: addMonths(end, -3), title: "계약 끝낼지 임차인에게 말하는 마감", plain: "이날까지 말하지 않으면 같은 조건, 같은 기간으로 자동 연장돼요.", overPlain: "기한이 지났어요. 같은 조건으로 자동 연장된 것으로 봐요.", basis: "농지법 제25조" });
+      if (start && !L.reportedAt) out.push({ type: "report", date: addDays(start, 60), title: "농지대장 신고 마감", plain: "읍·면사무소에 임대차 신고를 해야 해요. 안 하면 과태료 대상이에요.", overPlain: "신고 기한이 지났어요. 신고했는지 확인하고 신고일을 적어 주세요.", basis: "농지법 제49조의2" });
+    }
+    if (end) out.push({ type: "end", date: end, title: L.kind === "wituk" ? "위탁 계약 만료" : "계약 만료", plain: L.kind === "wituk" ? "갱신할지, 임차인을 바꿀지 지사와 미리 정해요." : "계약이 끝나는 날이에요.", overPlain: L.kind === "wituk" ? "만료일이 지났어요. 위탁이 갱신됐는지 지사에 확인해 주세요." : "만료일이 지났어요. 연장됐는지 확인해 주세요.", basis: "계약서" });
+    return out;
+  }
+  function checksFor(L) {
+    const issues = [];
+    const start = parseD(L.start), end = parseD(L.end);
+    if (["wituk", "private", "forest"].includes(L.kind) && !end) issues.push("만료일이 비어 있어요");
+    if (L.kind === "private" && start && end) {
+      const min = L.facility ? 5 : 3;
+      if (years(start, end) < min - 0.01) issues.push("계약 기간이 법정 최소 " + min + "년보다 짧아요");
+    }
+    const open = (L.issues || []).filter((i) => i.status !== "done").length;
+    if (open) issues.push("처리 중인 현장 문제 " + open + "건");
+    return issues;
+  }
+  function nextDeadline(L) {
+    const ds = deadlines(L).map((d) => Object.assign(d, { n: diffDays(d.date) })).filter((d) => d.n >= 0).sort((a, b) => a.n - b.n);
+    return ds[0] || null;
+  }
+
+  /* ---------- 화면: 할 일 ---------- */
+  function renderHome() {
+    const items = [];
+    state.leases.forEach((L) => deadlines(L).forEach((d) => {
+      const n = diffDays(d.date);
+      if (n <= 180) items.push({ L, d, n });
+    }));
+    items.sort((a, b) => a.n - b.n);
+    $("homeCount").textContent = state.loaded ? items.length + "건" : "";
+    const list = $("todoList");
+    if (!state.loaded) { list.innerHTML = ""; return; }
+    if (!items.length) {
+      list.innerHTML = '<li class="notice-bar">' + (state.leases.length ? "6개월 안에 챙길 날짜가 없어요." : "아직 등록된 땅이 없어요. '땅 목록'에서 '땅 추가'를 눌러 첫 땅을 적어 주세요.") + "</li>";
+    } else {
+      list.innerHTML = items.map(({ L, d, n }) => {
+        const u = urgency(n);
+        const plain = n < 0 ? d.overPlain : d.plain;
+        return '<li><button type="button" class="todo u-' + u + '" data-open="' + esc(L.id) + '">' +
+          '<span class="dday">' + ddayText(n) + "<small>" + fmt(d.date) + "</small></span>" +
+          '<span class="todo-title">' + esc(d.title) + "</span>" +
+          '<span class="todo-place">' + esc(L.region || "이름 없는 땅") + (L.tenant ? " · " + esc(L.tenant) : "") + "</span>" +
+          '<span class="todo-plain">' + esc(plain) + "</span></button></li>";
+      }).join("");
+    }
+    const flagged = state.leases.map((L) => ({ L, c: checksFor(L) })).filter((x) => x.c.length);
+    $("checks").innerHTML = flagged.length ? '<div class="section-head" style="margin-top:1.25rem"><h2>살펴볼 것</h2><span class="count">' + flagged.length + '곳</span></div><ul class="rows" style="margin-top:0.6rem">' +
+      flagged.map(({ L, c }) => '<li><button type="button" class="row" data-open="' + esc(L.id) + '"><span class="row-region">' + esc(L.region) + '</span><span class="row-meta flag">' + c.map(esc).join(" · ") + "</span></button></li>").join("") + "</ul>" : "";
+  }
+
+  /* ---------- 화면: 목록 ---------- */
+  function renderList() {
+    const counts = { all: state.leases.length };
+    state.leases.forEach((L) => { counts[L.kind] = (counts[L.kind] || 0) + 1; });
+    const opts = [["all", "전체"]].concat(Object.keys(KIND).filter((k) => counts[k]).map((k) => [k, KIND[k].label]));
+    $("chips").innerHTML = opts.map(([k, label]) => '<button type="button" class="chip" data-filter="' + k + '" aria-pressed="' + (state.filter === k) + '">' + label + " " + (counts[k] || 0) + "</button>").join("");
+    const rows = state.leases.filter((L) => state.filter === "all" || L.kind === state.filter)
+      .slice().sort((a, b) => (a.end || "9999").localeCompare(b.end || "9999"));
+    $("rows").innerHTML = !state.loaded ? "" : rows.length ? rows.map((L) => {
+      const k = KIND[L.kind] || KIND.idle;
+      const end = parseD(L.end);
+      const nd = nextDeadline(L);
+      return '<li><button type="button" class="row" data-open="' + esc(L.id) + '">' +
+        '<span class="row-top"><span class="row-region">' + esc(L.region || "이름 없는 땅") + '</span><span class="pill ' + k.cls + '">' + k.label + "</span></span>" +
+        '<span class="row-parcels">' + esc(L.parcels || "") + "</span>" +
+        '<span class="row-meta"><span>만료 ' + fmt(end) + (end ? " (" + ddayText(diffDays(end)) + ")" : "") + "</span>" +
+        (L.tenant ? "<span>임차인 " + esc(L.tenant) + "</span>" : "") +
+        (nd && nd.type !== "end" ? '<span class="flag">' + esc(nd.title) + " " + ddayText(nd.n) + "</span>" : "") + "</span></button></li>";
+    }).join("") : '<li class="notice-bar">이 유형으로 등록된 땅이 없어요.</li>';
+    $("addBtn").hidden = state.canWrite === false || !state.db;
+  }
+
+  /* ---------- 화면: 연락처 ---------- */
+  function renderContacts() {
+    $("contacts").innerHTML = !state.loaded ? "" : state.contacts.length ? state.contacts.map((c) =>
+      '<li class="contact"><span class="row-region">' + esc(c.name) + '</span><span class="phone-line"><span class="phone"><a href="tel:' + esc(String(c.phone).replace(/[^0-9+]/g, "")) + '">' + esc(c.phone) + '</a></span><button type="button" class="mini" data-copy="' + esc(c.phone) + '">복사</button></span>' +
+      (c.memo ? '<span class="row-parcels">' + esc(c.memo) + "</span>" : "") + "</li>").join("") : '<li class="notice-bar">등록된 연락처가 없어요.</li>';
+    $("contactForm").hidden = state.canWrite === false || !state.db;
+  }
+
+  function renderAll() { renderHome(); renderList(); renderContacts(); }
+
+  /* ---------- 상세 시트 ---------- */
+  let sheetFor = null, lastFocus = null;
+  function openSheet(id, mode) {
+    sheetFor = id; lastFocus = document.activeElement;
+    drawSheet(mode || "view");
+  }
+  function closeSheet() {
+    sheetFor = null; $("sheetRoot").innerHTML = "";
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  function blankLease() { return { addresses: [], region: "", parcels: "", kind: "private", start: "", end: "", tenant: "", phone: "", rent: "", area: "", facility: false, noticeDone: false, reportedAt: "", customDeadline: "", customDeadlineLabel: "", note: "", issues: [] }; }
+
+  function mapSection(L) {
+    const addrs = (Array.isArray(L.addresses) ? L.addresses : []).map((a) => String(a).trim()).filter(Boolean);
+    const head = "<div><h2>지도·토지이용계획</h2></div>";
+    if (!addrs.length) return head + '<p class="notice-bar">지도에서 찾을 주소가 없어요. \'수정\'에서 주소를 한 줄에 하나씩 적어 주세요. 예: 충청북도 영동군 심천면 약목리 2611</p>';
+    const codes = L.parcelCodes || {};
+    return head + '<ul class="issue-list">' + addrs.map((a) => {
+      const q = encodeURIComponent(a);
+      const pnu = /^\d{19}$/.test(String(codes[a] || "")) ? String(codes[a]) : "";
+      const eum = pnu
+        ? '<a class="maplink" href="https://www.eum.go.kr/web/ar/lu/luLandDet.jsp?isNoScr=script&amp;mode=search&amp;pnu=' + pnu + '" target="_blank" rel="noopener">토지이음</a>'
+        : '<a class="maplink" href="https://www.eum.go.kr" target="_blank" rel="noopener">토지이음 (주소로 검색)</a>';
+      return '<li class="issue"><span class="addr">' + esc(a) + '</span>' +
+        (pnu ? '<span class="todo-plain">필지 고유번호 ' + pnu + "</span>" : "") +
+        '<span class="btn-row">' + eum +
+        '<a class="maplink" href="https://map.kakao.com/link/search/' + q + '" target="_blank" rel="noopener">카카오맵</a>' +
+        '<a class="maplink" href="https://map.naver.com/p/search/' + q + '" target="_blank" rel="noopener">네이버지도</a>' +
+        '<button type="button" class="mini" data-copy="' + esc(a) + '">주소 복사</button></span></li>';
+    }).join("") + '</ul><p class="hint">토지이음에서는 용도지역, 농업진흥구역 여부, 지목, 면적을 볼 수 있어요. 링크는 새 창에서 열려요. 앱 안에서 안 열리면 주소를 복사해 검색창에 붙여 넣으세요.</p>';
+  }
+
+  function drawSheet(mode) {
+    const isNew = sheetFor === "__new";
+    const L = isNew ? blankLease() : state.leases.find((x) => x.id === sheetFor);
+    if (!L) { closeSheet(); return; }
+    const k = KIND[L.kind] || KIND.idle;
+    let body = "";
+    if (mode === "edit") {
+      body = editForm(L, isNew);
+    } else {
+      const ds = deadlines(L).map((d) => Object.assign(d, { n: diffDays(d.date) })).sort((a, b) => a.date - b.date);
+      const area = Number(L.area);
+      const c = checksFor(L);
+      body =
+        (c.length ? '<div class="confirm"><strong>살펴볼 것</strong><span>' + c.map(esc).join("<br>") + "</span></div>" : "") +
+        '<dl class="info">' +
+        "<dt>관리 유형</dt><dd><span class=\"pill " + k.cls + "\">" + k.label + "</span></dd>" +
+        "<dt>필지</dt><dd>" + esc(L.parcels || "—") + "</dd>" +
+        (area ? "<dt>면적</dt><dd>" + area.toLocaleString("ko-KR") + "㎡ (약 " + Math.round(area / 3.3058).toLocaleString("ko-KR") + "평)</dd>" : "") +
+        "<dt>계약 기간</dt><dd>" + fmt(parseD(L.start)) + " – " + fmt(parseD(L.end)) + "</dd>" +
+        "<dt>임차인</dt><dd>" + esc(L.tenant || "—") + (L.phone ? '<br><span class="phone-line"><span class="phone"><a href="tel:' + esc(String(L.phone).replace(/[^0-9+]/g, "")) + '">' + esc(L.phone) + '</a></span><button type="button" class="mini" data-copy="' + esc(L.phone) + '">복사</button></span>' : "") + "</dd>" +
+        (L.rent ? "<dt>임대료</dt><dd>" + esc(L.rent) + "</dd>" : "") +
+        (L.kind === "private" ? "<dt>시설·다년생</dt><dd>" + (L.facility ? "있음 (최소 5년)" : "없음 (최소 3년)") + "</dd><dt>농지대장 신고</dt><dd>" + (L.reportedAt ? fmt(parseD(L.reportedAt)) + " 신고함" : "신고일 미입력") + "</dd>" : "") +
+        (L.note ? "<dt>메모</dt><dd>" + esc(L.note).replace(/\n/g, "<br>") + "</dd>" : "") +
+        "</dl>" +
+        mapSection(L) +
+        "<div><h2>날짜</h2></div>" +
+        '<ul class="todo-list">' + (ds.length ? ds.map((d) => '<li class="todo u-' + urgency(d.n) + '" style="cursor:default"><span class="dday">' + ddayText(d.n) + "<small>" + fmt(d.date) + '</small></span><span class="todo-title">' + esc(d.title) + '</span><span class="todo-plain">' + esc(d.n < 0 ? d.overPlain : d.plain) + '</span><span class="todo-plain">근거: ' + esc(d.basis) + "</span></li>").join("") : '<li class="notice-bar">계산할 날짜가 없어요. 계약 기간을 적어 주세요.</li>') + "</ul>" +
+        "<div><h2>현장 기록</h2></div>" +
+        '<ul class="issue-list">' + ((L.issues || []).length ? L.issues.slice().sort((a, b) => (b.date || "").localeCompare(a.date || "")).map((it) => {
+          const idx = L.issues.indexOf(it);
+          return '<li class="issue"><span class="issue-top"><span>' + fmt(parseD(it.date)) + '</span><span class="' + (it.status === "done" ? "st-done" : "st-open") + '">' + (it.status === "done" ? "해결" : "처리 중") + "</span>" +
+            (state.canWrite !== false ? '<button type="button" class="mini" data-toggle-issue="' + idx + '">' + (it.status === "done" ? "다시 처리 중으로" : "해결로 표시") + "</button>" : "") +
+            "</span><span>" + esc(it.text) + "</span></li>";
+        }).join("") : '<li class="notice-bar">기록이 없어요. 무단 시설, 방치, 임대료 미납 같은 일을 날짜와 함께 적어 두면 상담 때 근거가 돼요.</li>') + "</ul>" +
+        (state.canWrite !== false ? '<form class="grid" id="issueForm"><div class="two"><div class="field"><label for="i-date">날짜</label><input type="date" id="i-date" value="' + iso(today0()) + '" required></div><div class="field"><label for="i-text">무슨 일</label><input id="i-text" required placeholder="예: 상의 없이 비닐하우스 설치"></div></div><div class="btn-row"><button class="btn ghost" type="submit">기록 추가</button></div></form>' : "") +
+        (state.canWrite !== false ? '<div class="btn-row"><button type="button" class="btn" data-edit>수정</button><button type="button" class="btn danger" data-ask-delete>삭제</button></div><div id="confirmBox"></div>' : '<p class="hint">이 화면은 보기 전용이에요.</p>');
+    }
+    $("sheetRoot").innerHTML =
+      '<div class="sheet-backdrop" data-close></div>' +
+      '<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div class="sheet-inner">' +
+      '<div class="sheet-head"><h1 id="sheetTitle">' + (isNew ? "땅 추가" : esc(L.region || "이름 없는 땅")) + '</h1><button type="button" class="close" data-close aria-label="닫기">✕</button></div>' +
+      body + "</div></div>";
+    const focusEl = $("sheetRoot").querySelector(mode === "edit" ? "#f-region" : ".close");
+    if (focusEl) focusEl.focus();
+    if (mode === "edit") wireEditForm(L, isNew);
+    const issueForm = $("issueForm");
+    if (issueForm) issueForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const text = $("i-text").value.trim(); const date = $("i-date").value;
+      if (!text) return;
+      const issues = (L.issues || []).map((x) => Object.assign({}, x)).concat([{ date, text, status: "open" }]);
+      writeLease(L.id, { issues }, true).then((ok) => { if (ok) toast("기록했어요"); });
+    });
+  }
+
+  function editForm(L, isNew) {
+    const opt = Object.keys(KIND).map((k) => '<option value="' + k + '"' + (L.kind === k ? " selected" : "") + ">" + KIND[k].label + "</option>").join("");
+    return '<form class="grid" id="editForm">' +
+      '<div class="field"><label for="f-region">땅 이름 (지역)</label><input id="f-region" required value="' + esc(L.region) + '" placeholder="예: 영동 심천면 약목리"></div>' +
+      '<div class="field"><label for="f-parcels">지번</label><input id="f-parcels" value="' + esc(L.parcels) + '" placeholder="예: 2611, 2612"></div>' +
+      '<div class="field"><label for="f-addr">지도에서 찾을 주소 (한 줄에 하나)</label><textarea id="f-addr" rows="3" placeholder="예: 충청북도 영동군 심천면 약목리 2611">' + esc((L.addresses || []).join("\n")) + "</textarea></div>" +
+      '<div class="two"><div class="field"><label for="f-kind">관리 유형</label><select id="f-kind">' + opt + '</select></div>' +
+      '<div class="field"><label for="f-area">면적 (㎡)</label><input id="f-area" inputmode="decimal" value="' + esc(L.area) + '"></div></div>' +
+      '<div class="two"><div class="field"><label for="f-start">계약 시작일</label><input type="date" id="f-start" value="' + esc(L.start) + '"></div>' +
+      '<div class="field"><label for="f-end">계약 만료일</label><input type="date" id="f-end" value="' + esc(L.end) + '"></div></div>' +
+      '<div class="two"><div class="field"><label for="f-tenant">임차인</label><input id="f-tenant" value="' + esc(L.tenant) + '"></div>' +
+      '<div class="field"><label for="f-phone">임차인 전화</label><input id="f-phone" inputmode="tel" value="' + esc(L.phone) + '"></div></div>' +
+      '<div class="field"><label for="f-rent">임대료</label><input id="f-rent" value="' + esc(L.rent) + '" placeholder="예: 연 쌀 2가마 / 연 50만원"></div>' +
+      '<div id="privateBox" class="grid" style="display:grid;gap:0.8rem">' +
+      '<label class="check"><input type="checkbox" id="f-facility"' + (L.facility ? " checked" : "") + '> 비닐하우스·고정식온실·다년생 작물이 있음 (최소 5년)</label>' +
+      '<label class="check"><input type="checkbox" id="f-notice"' + (L.noticeDone ? " checked" : "") + '> 이번 만료에 대해 임차인에게 이미 알림 (끝낼지·조건 변경)</label>' +
+      '<div class="field"><label for="f-reported">농지대장 신고일</label><input type="date" id="f-reported" value="' + esc(L.reportedAt) + '"></div></div>' +
+      '<div class="two"><div class="field"><label for="f-cdate">따로 챙길 날짜</label><input type="date" id="f-cdate" value="' + esc(L.customDeadline) + '"></div>' +
+      '<div class="field"><label for="f-clabel">그날 할 일</label><input id="f-clabel" value="' + esc(L.customDeadlineLabel) + '" placeholder="예: 임차인 교체 여부 결정"></div></div>' +
+      '<div class="field"><label for="f-note">메모</label><textarea id="f-note" rows="3">' + esc(L.note) + "</textarea></div>" +
+      '<p class="hint">저장하면 통지 마감(만료 3개월 전)과 신고 마감(시작일 + 60일)이 자동으로 계산돼요. 개인 간 임대에만 적용돼요.</p>' +
+      '<div class="btn-row"><button class="btn" type="submit" id="saveBtn">' + (isNew ? "추가하기" : "저장하기") + '</button><button class="btn ghost" type="button" data-' + (isNew ? "close" : "view") + ">취소</button></div></form>";
+  }
+  function wireEditForm(L, isNew) {
+    const kindSel = $("f-kind");
+    const sync = () => { $("privateBox").style.display = kindSel.value === "private" ? "grid" : "none"; };
+    kindSel.addEventListener("change", sync); sync();
+    $("editForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const v = (id) => $(id).value.trim();
+      const data = {
+        region: v("f-region"), parcels: v("f-parcels"),
+        addresses: $("f-addr").value.split("\n").map((s) => s.trim()).filter(Boolean),
+        parcelCodes: Object.assign({}, L.parcelCodes || {}), kind: kindSel.value, area: v("f-area"),
+        start: v("f-start"), end: v("f-end"), tenant: v("f-tenant"), phone: v("f-phone"), rent: v("f-rent"),
+        facility: $("f-facility").checked, noticeDone: $("f-notice").checked, reportedAt: v("f-reported"),
+        customDeadline: v("f-cdate"), customDeadlineLabel: v("f-clabel"), note: $("f-note").value.trim(),
+        issues: (L.issues || []).map((x) => Object.assign({}, x))
+      };
+      if (!data.region) return;
+      if (isNew) {
+        createLease(data);
+      } else {
+        writeLease(L.id, data, false).then((ok) => { if (ok) { toast("저장했어요"); drawSheet("view"); } });
+      }
+    });
+  }
+
+  /* ---------- 쓰기 (구글 시트) ---------- */
+  const CFG = window.LEDGER_CONFIG || {};
+  const auth = { url: "", key: "" };
+  function lsGet(k) { try { return localStorage.getItem(k) || ""; } catch (_) { return ""; } }
+  function lsSet(k, v) { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (_) {} }
+  async function api(action, extra) {
+    let res;
+    try {
+      res = await fetch(auth.url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ action, key: auth.key }, extra || {})) });
+    } catch (_) { throw { code: "network" }; }
+    if (!res.ok) throw { code: "network" };
+    let j;
+    try { j = await res.json(); } catch (_) { throw { code: "bad_response" }; }
+    if (!j.ok) throw { code: j.error || "server" };
+    return j;
+  }
+  function onWriteError(err) {
+    state.saving = false;
+    if (err && err.code === "wrong_password") { lsSet("farm-key", ""); auth.key = ""; showLogin("비밀번호가 바뀌었어요. 다시 입력해 주세요."); }
+    else toast("저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.");
+    return false;
+  }
+  function applyLease(item) {
+    const i = state.leases.findIndex((x) => x.id === item.id);
+    if (i >= 0) state.leases[i] = item; else state.leases.push(item);
+    renderAll();
+    if (sheetFor === item.id && !$("editForm")) drawSheet("view");
+  }
+  function saveLeaseFull(L) {
+    if (!state.db || state.saving) return Promise.resolve(null);
+    state.saving = true;
+    return api("saveLease", { data: L }).then((j) => { state.saving = false; applyLease(j.item); return j.item; }, (e) => { onWriteError(e); return null; });
+  }
+  function writeLease(id, data, merge) {
+    const cur = state.leases.find((x) => x.id === id) || {};
+    return saveLeaseFull(Object.assign({}, merge ? cur : {}, data, { id })).then((x) => !!x);
+  }
+  function createLease(data) {
+    saveLeaseFull(Object.assign({}, data, { id: "" })).then((item) => { if (item) { toast("추가했어요"); sheetFor = item.id; drawSheet("view"); } });
+  }
+  function deleteLease(id) {
+    if (!state.db || state.saving) return;
+    state.saving = true;
+    api("deleteLease", { id }).then(() => {
+      state.saving = false; state.leases = state.leases.filter((x) => x.id !== id); toast("삭제했어요"); closeSheet(); renderAll();
+    }, onWriteError);
+  }
+
+  /* ---------- 공통 이벤트 ---------- */
+  let toastTimer = null;
+  function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2200); }
+
+  document.addEventListener("click", (e) => {
+    const t = e.target.closest("[data-open],[data-close],[data-edit],[data-view],[data-ask-delete],[data-do-delete],[data-cancel-delete],[data-copy],[data-filter],[data-toggle-issue]");
+    if (!t) return;
+    if (t.hasAttribute("data-open")) openSheet(t.getAttribute("data-open"));
+    else if (t.hasAttribute("data-close")) closeSheet();
+    else if (t.hasAttribute("data-edit")) drawSheet("edit");
+    else if (t.hasAttribute("data-view")) drawSheet("view");
+    else if (t.hasAttribute("data-ask-delete")) {
+      $("confirmBox").innerHTML = '<div class="confirm"><span>이 땅과 현장 기록을 모두 지울까요? 되돌릴 수 없어요.</span><div class="btn-row"><button type="button" class="btn danger" data-do-delete>지우기</button><button type="button" class="btn ghost" data-cancel-delete>그대로 두기</button></div></div>';
+    }
+    else if (t.hasAttribute("data-do-delete")) deleteLease(sheetFor);
+    else if (t.hasAttribute("data-cancel-delete")) $("confirmBox").innerHTML = "";
+    else if (t.hasAttribute("data-copy")) {
+      const val = t.getAttribute("data-copy");
+      try { navigator.clipboard.writeText(val).then(() => toast("복사했어요"), () => toast("길게 눌러 복사해 주세요")); }
+      catch (_) { toast("길게 눌러 복사해 주세요"); }
+    }
+    else if (t.hasAttribute("data-filter")) { state.filter = t.getAttribute("data-filter"); renderList(); }
+    else if (t.hasAttribute("data-toggle-issue")) {
+      const L = state.leases.find((x) => x.id === sheetFor); if (!L) return;
+      const idx = Number(t.getAttribute("data-toggle-issue"));
+      const issues = (L.issues || []).map((x) => Object.assign({}, x));
+      if (!issues[idx]) return;
+      issues[idx].status = issues[idx].status === "done" ? "open" : "done";
+      writeLease(L.id, { issues }, true);
+    }
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && sheetFor) closeSheet(); });
+  $("addBtn").addEventListener("click", () => openSheet("__new", "edit"));
+  $("contactForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!state.db || state.saving) return;
+    const data = { name: $("c-name").value.trim(), phone: $("c-phone").value.trim(), memo: $("c-memo").value.trim(), order: Date.now() };
+    if (!data.name || !data.phone) return;
+    state.saving = true;
+    api("saveContact", { data }).then((j) => { state.saving = false; state.contacts.push(j.item); state.contacts.sort((a, b) => Number(a.order) - Number(b.order)); e.target.reset(); renderAll(); toast("연락처를 저장했어요"); }, onWriteError);
+  });
+
+  /* ---------- 화면 전환 ---------- */
+  const VIEWS = ["home", "list", "contacts"];
+  function route() {
+    const h = (location.hash || "").replace("#", "");
+    const v = VIEWS.includes(h) ? h : "home";
+    VIEWS.forEach((x) => { $("view-" + x).hidden = x !== v; });
+    document.querySelectorAll("nav.tabs a").forEach((a) => a.setAttribute("aria-current", a.dataset.view === v ? "page" : "false"));
+  }
+  window.addEventListener("hashchange", route);
+
+  /* ---------- 글씨 크기 ---------- */
+  function applySize(lg) { document.documentElement.setAttribute("data-size", lg ? "lg" : "md"); $("sizeBtn").setAttribute("aria-pressed", String(lg)); }
+  let lg = false; try { lg = localStorage.getItem("farm-size") === "lg"; } catch (_) {}
+  applySize(lg);
+  $("sizeBtn").addEventListener("click", () => { lg = !lg; applySize(lg); try { localStorage.setItem("farm-size", lg ? "lg" : "md"); } catch (_) {} });
+
+  /* ---------- 시작 ---------- */
+  const t = today0();
+  $("today").textContent = "오늘 " + t.getFullYear() + "년 " + (t.getMonth() + 1) + "월 " + t.getDate() + "일";
+  route(); renderAll();
+
+  function setStatus(msg) { const s = $("status"); s.hidden = !msg; s.textContent = msg || ""; }
+  function showLogin(msg) {
+    state.db = null; state.loaded = false; renderAll();
+    $("urlField").hidden = !!CFG.scriptUrl;
+    $("l-url").value = auth.url || "";
+    $("loginForm").hidden = false;
+    setStatus(msg || "");
+  }
+  async function load(silent) {
+    try {
+      const j = await api("list");
+      state.db = true; state.canWrite = true;
+      state.leases = j.leases || [];
+      state.contacts = (j.contacts || []).slice().sort((a, b) => Number(a.order) - Number(b.order));
+      state.loaded = true; $("loginForm").hidden = true; setStatus(""); renderAll();
+      if (sheetFor && sheetFor !== "__new" && !$("editForm")) {
+        if (state.leases.some((x) => x.id === sheetFor)) drawSheet("view"); else closeSheet();
+      }
+      return true;
+    } catch (e) {
+      if (e && e.code === "wrong_password") { lsSet("farm-key", ""); auth.key = ""; showLogin("비밀번호가 맞지 않아요. 다시 입력해 주세요."); }
+      else if (e && e.code === "no_password_set") showLogin("시트 스크립트에 가족 비밀번호가 아직 없어요. 안내문의 1단계를 확인해 주세요.");
+      else if (!silent) { if (!state.db) showLogin("장부에 연결하지 못했어요. 연결 주소와 인터넷을 확인해 주세요."); else setStatus("새 내용을 불러오지 못했어요. 인터넷 연결을 확인해 주세요."); }
+      return false;
+    }
+  }
+  $("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const url = CFG.scriptUrl || $("l-url").value.trim();
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec$/.test(url)) { setStatus("연결 주소는 https://script.google.com/macros/s/…/exec 모양이어야 해요."); return; }
+    auth.url = url; auth.key = $("l-key").value;
+    setStatus("확인하는 중이에요.");
+    if (await load()) {
+      lsSet("farm-key", auth.key); if (!CFG.scriptUrl) lsSet("farm-url", url);
+      $("l-key").value = ""; toast("장부를 열었어요");
+    }
+  });
+  $("logoutBtn").addEventListener("click", () => { lsSet("farm-key", ""); auth.key = ""; showLogin("이 기기에서 비밀번호를 지웠어요."); });
+  const typing = () => /INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || "");
+  const quietRefresh = () => { if (state.db && document.visibilityState === "visible" && !state.saving && !$("editForm") && !typing()) load(true); };
+  setInterval(quietRefresh, 60000);
+  document.addEventListener("visibilitychange", quietRefresh);
+
+  auth.url = CFG.scriptUrl || lsGet("farm-url");
+  auth.key = lsGet("farm-key");
+  if (auth.url && auth.key) { setStatus("장부를 불러오는 중이에요."); load(); } else showLogin("");
+})();
+</script>
+</body>
+</html>
