@@ -1,7 +1,8 @@
 // 장부 연결 설정
-// scriptUrl: 구글 시트에 붙인 Apps Script의 '웹 앱 URL' (https://script.google.com/macros/s/…/exec)
-// 비워 두면 첫 화면에서 주소를 직접 입력할 수 있어요.
-// 비밀번호는 여기에 절대 적지 마세요. 이 파일은 공개 저장소에 올라갑니다.
+// 시트 주소는 이 공개 저장소에 적지 않습니다.
+// 가족에게는 페이지 주소 뒤에 ?s=시트ID 를 붙인 링크를 보내 주세요. 한 번 열면 그 휴대폰이 기억해요.
 window.LEDGER_CONFIG = {
-  scriptUrl: ""
+  sheetId: "",
+  landTab: "땅 목록",
+  contactTab: "연락처"
 };
