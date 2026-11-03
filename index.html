@@ -190,6 +190,7 @@ nav.tabs a[aria-current="page"] { background: var(--accent); color: var(--accent
 @media (hover: hover) { nav.tabs a:not([aria-current="page"]):hover { border-color: var(--line); } }
 
 .credit { text-align: center; color: var(--muted); font-size: 0.82rem; padding-block: 1.5rem 0.5rem; border-top: 1px solid var(--line); margin-top: 1rem; }
+.admin-link { display: block; width: fit-content; margin: 1.2rem auto 0; color: var(--muted); opacity: 0.45; font-size: 0.7rem; text-decoration: none; padding: 0.3rem 0.6rem; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(6rem + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg); padding: 0.6rem 1.2rem; border-radius: 999px; z-index: 30; font-size: 0.95rem; font-weight: 600; }
 @media (max-width: 460px) { dl.info { grid-template-columns: 1fr; gap: 0.1rem; } dl.info dd { margin-bottom: 0.5rem; } }
 @media (max-width: 380px) { .size-row .lbl { display: none; } }
@@ -230,7 +231,6 @@ nav.tabs a[aria-current="page"] { background: var(--accent); color: var(--accent
     <section id="view-list" aria-labelledby="h-list" hidden>
       <div class="section-head">
         <h2 id="h-list">땅 목록</h2>
-        <a class="btn ghost" id="editSheetLink" href="#" target="_blank" rel="noopener">시트에서 고치기</a>
       </div>
       <div class="chips" id="chips" role="group" aria-label="관리 유형으로 거르기"></div>
       <ul class="rows" id="rows"></ul>
@@ -244,7 +244,7 @@ nav.tabs a[aria-current="page"] { background: var(--accent); color: var(--accent
       <ul class="rows" id="contacts"></ul>
     </section>
   </main>
-  <footer class="credit">만든이: 노미희 2026.11.03 ver.1.0</footer>
+  <footer class="credit">만든이: 노미희 2026.11.03 ver.1.0<a class="admin-link" id="adminSheetLink" href="#" target="_blank" rel="noopener" hidden>관리</a></footer>
 </div>
 
 <nav class="tabs" aria-label="메뉴">
@@ -430,7 +430,7 @@ nav.tabs a[aria-current="page"] { background: var(--accent); color: var(--accent
       '<span class="todo-title">' + esc(d.title) + "</span>" +
       '<span class="todo-place">' + esc(L.region) + (L.tenant ? " · " + esc(L.tenant) : "") + "</span>" +
       '<span class="todo-plain">' + esc(n < 0 ? d.overPlain : d.plain) + "</span></button></li>").join("")
-      : '<li class="notice-bar">' + (state.leases.length ? "6개월 안에 챙길 날짜가 없어요." : "아직 등록된 땅이 없어요. '땅 목록'의 '시트에서 고치기'로 시트에 적어 주세요.") + "</li>";
+      : '<li class="notice-bar">' + (state.leases.length ? "6개월 안에 챙길 날짜가 없어요." : "아직 등록된 땅이 없어요.") + "</li>";
     const flagged = state.leases.map((L) => ({ L, c: checksFor(L) })).filter((x) => x.c.length);
     $("checks").innerHTML = flagged.length ? '<div class="section-head" style="margin-top:1.4rem"><h2>살펴볼 것</h2><span class="count">' + flagged.length + '곳</span></div><ul class="rows">' +
       flagged.map(({ L, c }) => '<li><button type="button" class="row" data-open="' + esc(L.id) + '"><span class="row-region">' + esc(L.region) + '</span><span class="row-meta flag">' + c.map(esc).join(" · ") + "</span></button></li>").join("") + "</ul>" : "";
@@ -509,8 +509,7 @@ nav.tabs a[aria-current="page"] { background: var(--accent); color: var(--accent
       "<div><h2>현장 기록</h2></div>" +
       '<ul class="issue-list">' + (L.issues.length ? L.issues.slice().sort((a, b) => (b.date || "").localeCompare(a.date || "")).map((it) =>
         '<li class="issue"><span class="issue-top"><span>' + fmt(parseD(it.date)) + '</span><span class="' + (it.status === "done" ? "st-done" : "st-open") + '">' + (it.status === "done" ? "해결" : "처리 중") + "</span></span><span>" + esc(it.text) + "</span></li>").join("")
-        : '<li class="notice-bar">기록이 없어요. 무단 시설, 방치, 임대료 미납 같은 일을 날짜와 함께 시트에 적어 두면 상담 때 근거가 돼요.</li>') + "</ul>" +
-      '<div class="btn-row"><a class="btn ghost" href="' + esc(SHEET_EDIT) + '" target="_blank" rel="noopener">시트에서 고치기</a></div>';
+        : '<li class="notice-bar">기록이 없어요. 무단 시설, 방치, 임대료 미납 같은 일을 날짜와 함께 시트에 적어 두면 상담 때 근거가 돼요.</li>') + "</ul>";
     $("sheetRoot").innerHTML =
       '<div class="sheet-backdrop" data-close></div>' +
       '<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div class="sheet-inner">' +
@@ -538,7 +537,7 @@ nav.tabs a[aria-current="page"] { background: var(--accent); color: var(--accent
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && sheetFor) closeSheet(); });
   $("refreshBtn").addEventListener("click", () => load("manual"));
-  $("editSheetLink").href = SHEET_EDIT;
+  if (SHEET_ID) { $("adminSheetLink").href = SHEET_EDIT; $("adminSheetLink").hidden = false; }
 
   /* ---------- 화면 전환 ---------- */
   const VIEWS = ["home", "list", "contacts"];
