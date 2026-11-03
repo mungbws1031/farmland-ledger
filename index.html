@@ -321,6 +321,7 @@ nav.tabs a[aria-current="page"] { background: var(--accent); color: var(--accent
       const d = parseD(L.customDeadline);
       if (d) out.push({ type: "custom", date: d, title: L.customDeadlineLabel || "따로 챙길 날짜", plain: "직접 정한 날짜예요.", overPlain: "정한 날짜가 지났어요. 처리했으면 시트에서 지워 주세요.", basis: "직접 입력" });
     }
+    if (L.kind === "wituk" && end && !L.noticeDone) out.push({ type: "notice", date: addMonths(end, -3), title: "임차인 바꾸려면 통보하는 마감", plain: "임차인을 바꾸려면 이날까지 농지은행(지사)에 알려야 해요. 지나면 같은 임차인으로 이어져요.", overPlain: "통보 기한이 지났어요. 이번 만기에 임차인을 바꿀 수 있는지 지사에 바로 확인해 주세요.", basis: "만기 3개월 전 통보 (농지은행 위탁 계약)" });
     if (L.kind === "private") {
       if (end && !L.noticeDone) out.push({ type: "notice", date: addMonths(end, -3), title: "계약 끝낼지 임차인에게 말하는 마감", plain: "이날까지 말하지 않으면 같은 조건, 같은 기간으로 자동 연장돼요.", overPlain: "기한이 지났어요. 같은 조건으로 자동 연장된 것으로 봐요.", basis: "농지법 제25조" });
       if (start && !L.reportedAt) out.push({ type: "report", date: addDays(start, 60), title: "농지대장 신고 마감", plain: "읍·면사무소에 임대차 신고를 해야 해요. 안 하면 과태료 대상이에요.", overPlain: "신고 기한이 지났어요. 신고했으면 시트에 신고일을 적어 주세요.", basis: "농지법 제49조의2" });
@@ -501,7 +502,8 @@ nav.tabs a[aria-current="page"] { background: var(--accent); color: var(--accent
       "<dt>계약 기간</dt><dd>" + fmt(parseD(L.start)) + " – " + fmt(parseD(L.end)) + "</dd>" +
       "<dt>임차인</dt><dd>" + esc(L.tenant || "—") + (L.phone ? '<br><span class="phone-line"><span class="phone"><a href="' + esc(telHref(L.phone)) + '">' + esc(L.phone) + '</a></span><button type="button" class="mini" data-copy="' + esc(L.phone) + '">복사</button></span>' : "") + "</dd>" +
       (L.rent ? "<dt>임대료</dt><dd>" + esc(L.rent) + "</dd>" : "") +
-      (L.kind === "private" ? "<dt>시설·다년생</dt><dd>" + (L.facility ? "있음 (최소 5년)" : "없음 (최소 3년)") + "</dd><dt>농지대장 신고</dt><dd>" + (L.reportedAt ? fmt(parseD(L.reportedAt)) + " 신고함" : "신고일 미입력") + "</dd>" : "") +
+      (L.kind === "wituk" ? "<dt>임차인 교체 통보</dt><dd>" + (L.noticeDone ? "통보함" : "아직 안 함 (만기 3개월 전까지)") + "</dd>" : "") +
+        (L.kind === "private" ? "<dt>시설·다년생</dt><dd>" + (L.facility ? "있음 (최소 5년)" : "없음 (최소 3년)") + "</dd><dt>농지대장 신고</dt><dd>" + (L.reportedAt ? fmt(parseD(L.reportedAt)) + " 신고함" : "신고일 미입력") + "</dd>" : "") +
       (L.note ? "<dt>메모</dt><dd>" + esc(L.note).replace(/\n/g, "<br>") + "</dd>" : "") +
       "</dl>" +
       mapSection(L) +
