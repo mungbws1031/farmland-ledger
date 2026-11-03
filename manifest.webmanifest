@@ -1,6 +1,6 @@
 {
-  "name": "우리 땅 임대 장부",
-  "short_name": "땅 장부",
+  "name": "농지 임대 상황 보기",
+  "short_name": "농지 임대",
   "lang": "ko",
   "start_url": "./",
   "scope": "./",
